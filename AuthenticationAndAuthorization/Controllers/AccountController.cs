@@ -1,4 +1,6 @@
-﻿using AuthenticationAndAuthorization.Models.DTOs;
+﻿
+
+using AuthenticationAndAuthorization.Models.DTOs;
 using AuthenticationAndAuthorization.Models.Entities;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
@@ -29,18 +31,18 @@ namespace AuthenticationAndAuthorization.Controllers
             RegisterDTO registerDTO = new();
             return View(registerDTO);
         }
-        [HttpPost, AutoValidateAntiforgeryToken, AllowAnonymous]
+
+
+
+        [HttpPost, ValidateAntiForgeryToken, AllowAnonymous]
         public async Task<IActionResult> Register(RegisterDTO registerDTO)
         {
             if (ModelState.IsValid)
             {
-                AppUser appUser = new AppUser
-                {
-                    UserName = registerDTO.Username,
-                    Email =
-                    registerDTO.Email
-                };
+                AppUser appUser = new AppUser { UserName = registerDTO.UserName, Email = registerDTO.Email };
+
                 var result = await userManager.CreateAsync(appUser, registerDTO.Password);
+
                 if (result.Succeeded)
                 {
                     return RedirectToAction("Login");
@@ -49,17 +51,21 @@ namespace AuthenticationAndAuthorization.Controllers
                 {
                     foreach (var item in result.Errors)
                     {
-                        ModelState.TryAddModelError("", item.Description);
+                        ModelState.AddModelError("", item.Description);
                     }
                 }
             }
+
             return View(registerDTO);
         }
+
         [AllowAnonymous]
         public IActionResult Login(string url)
         {
+
             return View(new LoginDTO { ReturnUrl = url });
         }
+
         [HttpPost, ValidateAntiForgeryToken, AllowAnonymous]
         public async Task<IActionResult> Login(LoginDTO loginDTO)
         {
@@ -69,20 +75,17 @@ namespace AuthenticationAndAuthorization.Controllers
                 if (user != null)
                 {
                     var signInResult = await signInManager.PasswordSignInAsync(user, loginDTO.Password, false, false);
+
                     if (signInResult.Succeeded)
                     {
                         return RedirectToAction("Index", "Home");
+                    }
 
-                    }
-                    else
-                    {
-                        ModelState.AddModelError("", "Kullanici adi yada şifre yanliş");
-                    }
+                    ModelState.AddModelError("", "Kullanici Adi yada Şifre Yanliş");
 
                 }
 
             }
-
 
             return View(loginDTO);
         }
@@ -90,6 +93,35 @@ namespace AuthenticationAndAuthorization.Controllers
         {
             await signInManager.SignOutAsync();
             return RedirectToAction("Login");
+        }
+        [HttpGet]
+        public async Task<IActionResult> Edit()
+        {
+            var user = await userManager.FindByNameAsync(User.Identity.Name);
+
+            UserUpdateDTO userUpdateDTO = new UserUpdateDTO(user);
+
+            return View(userUpdateDTO);
+        }
+        [HttpPost, ValidateAntiForgeryToken]
+        public async Task<IActionResult> Edit(UserUpdateDTO userUpdateDTO)
+        {
+            if (ModelState.IsValid)
+            {
+                AppUser user = await userManager.FindByNameAsync(User.Identity.Name);
+                user.UserName = userUpdateDTO.UserName;
+                if (userUpdateDTO.Password != null)
+                {
+                    user.PasswordHash = passwordHasher.HashPassword(user, userUpdateDTO.Password);
+                }
+                var result = await userManager.UpdateAsync(user);
+
+                if (result.Succeeded)
+                {
+                    return RedirectToAction("Index", "Home");
+                }
+            }
+            return View(userUpdateDTO);
         }
     }
 }

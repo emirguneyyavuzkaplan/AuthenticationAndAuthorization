@@ -1,4 +1,5 @@
 ﻿using AuthenticationAndAuthorization.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Diagnostics;
 
@@ -18,6 +19,7 @@ namespace AuthenticationAndAuthorization.Controllers
             return View();
         }
 
+        [Authorize(Roles = "manager")]
         public IActionResult Privacy()
         {
             return View();

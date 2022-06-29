@@ -6,13 +6,16 @@ namespace AuthenticationAndAuthorization.Infrastructure.Contexts
 {
     public class SqlContext : IdentityDbContext<AppUser>
     {
+
         public SqlContext()
         {
 
         }
+
         public SqlContext(DbContextOptions<SqlContext> options) : base(options)
         {
 
         }
+
     }
 }
